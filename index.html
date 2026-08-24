@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Glasswork</title>
+<title>Light Table</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500&display=swap">
 <style>
   :root {
@@ -38,23 +38,21 @@
     -webkit-backdrop-filter: blur(9px);
   }
 
-  .plate--title { top: 24px; left: 24px; max-width: min(26rem, calc(100vw - 48px)); }
+  .plate--title { top: 24px; left: 24px; max-width: min(25rem, calc(100vw - 48px)); }
 
   .mark {
     margin: 0;
     font-family: var(--serif);
-    font-size: clamp(2.6rem, 6vw, 4.2rem);
+    font-size: clamp(2.4rem, 5.6vw, 3.8rem);
     font-weight: 400;
     line-height: 0.92;
     letter-spacing: -0.01em;
   }
-
   .mark em { font-style: italic; opacity: 0.82; }
 
   .spec {
-    margin: 10px 0 0;
-    font-size: 0.63rem;
-    font-weight: 400;
+    margin: 9px 0 0;
+    font-size: 0.62rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--dim);
@@ -62,25 +60,46 @@
 
   .blurb {
     margin: 12px 0 0;
-    max-width: 24rem;
-    font-size: 0.74rem;
+    max-width: 23rem;
+    font-size: 0.73rem;
     font-weight: 300;
     line-height: 1.55;
     color: var(--dim);
   }
 
+  .plate--scenes { top: 24px; right: 24px; display: grid; gap: 2px; padding: 10px; }
+
+  .scene {
+    display: grid;
+    grid-template-columns: 1.6rem 1fr;
+    gap: 10px;
+    align-items: baseline;
+    padding: 8px 10px;
+    border: 0;
+    background: transparent;
+    color: var(--dim);
+    font: 400 0.68rem/1.3 var(--mono);
+    letter-spacing: 0.04em;
+    text-align: left;
+    cursor: pointer;
+    transition: color 160ms ease, background 160ms ease;
+  }
+  .scene:hover { color: var(--paper); background: rgba(233, 230, 223, 0.05); }
+  .scene[aria-current="true"] { color: var(--ink); background: var(--paper); }
+  .scene span:first-child { font-variant-numeric: tabular-nums; opacity: 0.7; }
+  .scene:focus-visible { outline: 1px solid var(--paper); outline-offset: 2px; }
+
   .plate--desk {
     right: 24px;
     bottom: 24px;
-    left: auto;
     display: grid;
     gap: 12px;
     width: min(19rem, calc(100vw - 48px));
   }
 
   .dial { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; }
-  .dial label { font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
-  .dial output { font-size: 0.62rem; font-variant-numeric: tabular-nums; color: var(--paper); }
+  .dial label { font-size: 0.61rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim); }
+  .dial output { font-size: 0.61rem; font-variant-numeric: tabular-nums; }
 
   input[type="range"] {
     grid-column: 1 / -1;
@@ -95,8 +114,7 @@
   input[type="range"]::-webkit-slider-runnable-track { height: 1px; background: var(--rule); }
   input[type="range"]::-moz-range-track { height: 1px; background: var(--rule); }
   input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 9px; height: 9px; border-radius: 50%;
+    -webkit-appearance: none; width: 9px; height: 9px; border-radius: 50%;
     background: var(--paper); border: 0; margin-top: -4px;
   }
   input[type="range"]::-moz-range-thumb {
@@ -105,14 +123,9 @@
   input[type="range"]:focus-visible { outline: 1px solid var(--paper); outline-offset: 4px; }
 
   .readout {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    padding-top: 10px;
-    border-top: 1px solid var(--rule);
-    font-size: 0.6rem;
-    letter-spacing: 0.1em;
-    color: var(--dim);
+    display: flex; justify-content: space-between; gap: 12px;
+    padding-top: 10px; border-top: 1px solid var(--rule);
+    font-size: 0.59rem; letter-spacing: 0.1em; color: var(--dim);
     font-variant-numeric: tabular-nums;
   }
 
@@ -121,10 +134,12 @@
     padding: 8vw; text-align: center; font-size: 0.85rem; line-height: 1.6; color: var(--dim);
   }
 
-  @media (max-width: 720px) {
-    .plate--title { top: 16px; left: 16px; padding: 12px 14px; }
+  @media (max-width: 820px) {
+    .plate--title { top: 14px; left: 14px; right: 14px; max-width: none; padding: 12px 14px; }
     .blurb { display: none; }
-    .plate--desk { right: 16px; left: 16px; bottom: 16px; width: auto; }
+    .plate--scenes { top: auto; bottom: 176px; left: 14px; right: 14px; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); }
+    .scene { grid-template-columns: 1.4rem 1fr; padding: 7px 8px; }
+    .plate--desk { right: 14px; left: 14px; bottom: 14px; width: auto; }
   }
 </style>
 </head>
@@ -133,10 +148,12 @@
 <div class="fail" id="fail">This piece needs WebGL2, which this browser did not provide.</div>
 
 <header class="plate plate--title">
-  <h1 class="mark">Glass<em>work</em></h1>
-  <p class="spec">Signed distance field · dispersive refraction</p>
-  <p class="blurb">Five emitters orbit a glass torus. Nothing here is a lit texture — light is integrated along every ray, and each primary is refracted at its own index, so the fringing is the geometry disagreeing with itself rather than a colour offset.</p>
+  <h1 class="mark">Light <em>Table</em></h1>
+  <p class="spec">Signed distance fields · dispersive optics</p>
+  <p class="blurb" id="blurb">Five studies on one renderer. Nothing here is a lit texture — light is integrated along every ray, each primary refracts at its own index, and the streaks are the exposure being dragged rather than a blur filter.</p>
 </header>
+
+<nav class="plate plate--scenes" id="scenes" aria-label="Scenes"></nav>
 
 <section class="plate plate--desk" aria-label="Controls">
   <div class="dial">
@@ -145,7 +162,11 @@
   </div>
   <div class="dial">
     <label for="aberr">Lateral aberration</label><output id="aberrOut">0.10</output>
-    <input type="range" id="aberr" min="0" max="0.4" step="0.005" value="0.1">
+    <input type="range" id="aberr" min="0" max="0.5" step="0.005" value="0.1">
+  </div>
+  <div class="dial">
+    <label for="smear">Exposure drag</label><output id="smearOut">0.00</output>
+    <input type="range" id="smear" min="0" max="1" step="0.01" value="0">
   </div>
   <div class="dial">
     <label for="expo">Exposure</label><output id="expoOut">1.00</output>
@@ -158,7 +179,8 @@
 (() => {
   const canvas = document.getElementById('stage');
   const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, powerPreference: 'high-performance' });
-  if (!gl) { document.getElementById('fail').style.display = 'grid'; return; }
+  const failEl = document.getElementById('fail');
+  if (!gl) { failEl.style.display = 'grid'; return; }
   const floatOK = !!gl.getExtension('EXT_color_buffer_float');
 
   const VERT = `#version 300 es
@@ -174,31 +196,76 @@ uniform vec2 uRes;
 uniform float uTime;
 uniform vec2 uOrbit;
 uniform float uDisp;
+uniform int uScene;
 
-const int NE = 5;
-const float GLOW = 0.038;
+const int NE = 6;
 const float TAU = 6.28318530718;
 
 mat2 rot(float a) { float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+float sdSphere(vec3 p, float r) { return length(p) - r; }
+float sdTorus(vec3 p, vec2 t) { vec2 q = vec2(length(p.xz) - t.x, p.y); return length(q) - t.y; }
+float sdBox(vec3 p, vec3 b) { vec3 q = abs(p) - b; return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0); }
+float smin(float a, float b, float k) { float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0); return mix(b, a, h) - k * h * (1.0 - h); }
 
+// ---- emitters: every scene places the same six lamps differently -----------
 vec3 emitPos(int i) {
   float f = float(i);
-  float a = f * TAU / float(NE) + uTime * 0.21;
-  return vec3(cos(a) * 2.4, sin(uTime * 0.53 + f * 1.7) * 0.72, sin(a) * 2.4);
+  if (uScene == 0) {
+    float a = f * TAU / 5.0 + uTime * 0.21;
+    return vec3(cos(a) * 2.4, sin(uTime * 0.53 + f * 1.7) * 0.72, sin(a) * 2.4);
+  } else if (uScene == 1) {
+    return vec3((f - 2.5) * 1.42 + sin(uTime * 0.31 + f) * 0.25, -0.35 + sin(uTime * 0.44 + f * 2.1) * 0.85, -1.55);
+  } else if (uScene == 2) {
+    return vec3(sin(uTime * 0.33 + f * 2.4) * 2.2, 1.4 + cos(uTime * 0.27 + f * 1.9) * 0.9, 1.15 + sin(f) * 0.35);
+  } else if (uScene == 3) {
+    return vec3(sin(uTime * 0.19 + f * 2.6) * 2.2, 0.2 + sin(uTime * 0.23 + f) * 1.0, cos(uTime * 0.19 + f * 2.6) * 2.2);
+  }
+  return vec3(sin(uTime * 0.4 + f * 1.3) * 0.16, (f - 2.5) * 0.62 + sin(uTime * 0.5) * 0.1, cos(uTime * 0.4 + f * 1.3) * 0.16);
+}
+
+float emitW(int i) {
+  if (uScene == 0) return i < 5 ? 1.0 : 0.0;
+  if (uScene == 2) return i < 3 ? 1.0 : 0.0;
+  if (uScene == 3) return i < 2 ? 1.0 : 0.0;
+  return 1.0;
+}
+
+float emitR(int i) {
+  if (uScene == 1) return 0.13;
+  if (uScene == 2) return 0.2;
+  if (uScene == 3) return 0.34;
+  if (uScene == 4) return 0.14;
+  return 0.175;
 }
 
 vec3 emitCol(int i) {
-  float f = float(i) / float(NE - 1);
+  float f = float(i) / 5.0;
   vec3 deep = vec3(0.16, 0.36, 1.0);
   vec3 cyan = vec3(0.36, 0.86, 1.0);
   vec3 amber = vec3(1.0, 0.50, 0.13);
+  if (uScene == 1) return i == 4 ? amber : mix(deep, cyan, f * 1.4);
+  if (uScene == 2) return i == 1 ? amber : mix(deep, cyan, f);
+  if (uScene == 3) return mix(vec3(1.0, 0.86, 0.72), vec3(0.7, 0.82, 1.0), f * 5.0);
+  if (uScene == 4) {
+    vec3 hot = vec3(1.0, 0.24, 0.14);
+    vec3 gold = vec3(1.0, 0.72, 0.16);
+    vec3 ice = vec3(0.3, 0.78, 1.0);
+    return f < 0.4 ? mix(hot, gold, f * 2.5) : mix(gold, ice, (f - 0.4) * 1.67);
+  }
   return f < 0.5 ? mix(deep, cyan, f * 2.0) : mix(cyan, amber, (f - 0.5) * 2.0);
 }
 
-float sdTorus(vec3 p, vec2 t) { vec2 q = vec2(length(p.xz) - t.x, p.y); return length(q) - t.y; }
-float sdSphere(vec3 p, float r) { return length(p) - r; }
+float emitGain() {
+  if (uScene == 1) return 0.028;
+  if (uScene == 2) return 0.016;
+  if (uScene == 3) return 0.075;
+  if (uScene == 4) return 0.03;
+  return 0.038;
+}
 
+// ---- geometry --------------------------------------------------------------
 float mapGlass(vec3 p) {
+  if (uScene != 0) return 1e9;
   vec3 q = p;
   q.yz *= rot(0.62 + sin(uTime * 0.19) * 0.3);
   q.xz *= rot(uTime * 0.16);
@@ -207,11 +274,50 @@ float mapGlass(vec3 p) {
   return min(d, sdSphere(s, 0.42));
 }
 
+// A sheet creased into a triangle wave. Not an exact distance field, so the
+// march is scaled back to keep it from stepping through a fold.
+float foldedSheet(vec3 p) {
+  vec3 q = p;
+  q.xy *= rot(0.22 + sin(uTime * 0.13) * 0.1);
+  float w = abs(fract(q.x * 1.05 + sin(uTime * 0.11) * 0.3) - 0.5) * 2.0 - 0.5;
+  float w2 = abs(fract(q.y * 0.78 + 0.25) - 0.5) * 2.0 - 0.5;
+  float sheet = abs(q.z - w * 0.72 - w2 * 0.34) - 0.04;
+  return max(sheet, sdBox(p, vec3(4.2, 3.0, 2.6))) * 0.55;
+}
+
+float mapGeom(vec3 p) {
+  float d;
+  if (uScene == 1) {
+    d = p.y + 1.4;
+    vec3 q = p;
+    q.x = mod(q.x + 0.71, 1.42) - 0.71;
+    d = min(d, sdBox(q - vec3(0.0, 0.55, 0.0), vec3(0.17, 2.5, 0.42)));
+  } else if (uScene == 2) {
+    d = foldedSheet(p);
+  } else if (uScene == 3) {
+    float b = sdSphere(p - vec3(-1.1, -0.2, 0.4), 1.15);
+    b = smin(b, sdSphere(p - vec3(1.2, 0.35, -0.5), 0.95), 0.9);
+    b = smin(b, sdSphere(p - vec3(0.1, -1.0, -1.2), 1.05), 0.9);
+    d = min(b, p.y + 1.9);
+  } else if (uScene == 4) {
+    d = p.y + 2.4;
+    vec3 q = p;
+    q.xz *= rot(uTime * 0.13);
+    q.y = mod(q.y + 0.31, 0.62) - 0.31;
+    d = min(d, sdBox(q - vec3(0.52, 0.0, 0.0), vec3(0.26, 0.2, 0.26)));
+    d = min(d, sdBox(q + vec3(0.52, 0.0, 0.0), vec3(0.26, 0.2, 0.26)));
+  } else {
+    d = p.y + 1.4;
+  }
+  return d;
+}
+
 float mapSolid(vec3 p, out int mat) {
-  float d = p.y + 1.4;
   mat = 0;
+  float d = mapGeom(p);
   for (int i = 0; i < NE; i++) {
-    float de = sdSphere(p - emitPos(i), 0.175);
+    if (emitW(i) <= 0.0) continue;
+    float de = sdSphere(p - emitPos(i), emitR(i));
     if (de < d) { d = de; mat = 1 + i; }
   }
   return d;
@@ -230,11 +336,7 @@ Hit march(vec3 ro, vec3 rd, bool withGlass, float tmax) {
     float ds = mapSolid(p, m);
     float dg = withGlass ? mapGlass(p) : 1e9;
     float d = min(ds, dg);
-    if (d < 0.0016 * t + 0.0007) {
-      h.t = t;
-      h.mat = dg < ds ? -2 : m;
-      return h;
-    }
+    if (d < 0.0016 * t + 0.0007) { h.t = t; h.mat = dg < ds ? -2 : m; return h; }
     t += d;
     if (t > tmax) break;
   }
@@ -249,73 +351,92 @@ vec3 nrmGlass(vec3 p) {
     mapGlass(p + e.yyx) - mapGlass(p - e.yyx)));
 }
 
+vec3 nrmSolid(vec3 p) {
+  vec2 e = vec2(0.0016, 0.0);
+  return normalize(vec3(
+    mapGeom(p + e.xyy) - mapGeom(p - e.xyy),
+    mapGeom(p + e.yxy) - mapGeom(p - e.yxy),
+    mapGeom(p + e.yyx) - mapGeom(p - e.yyx)));
+}
+
 // Scattering toward a point emitter has a closed form along a ray, so the haze
-// costs one atan pair per light instead of a sample per marching step.
+// costs one atan pair per lamp instead of a sample at every marching step. The
+// impact parameter has to be clamped — the integral diverges on grazing rays.
 vec3 glowAlong(vec3 ro, vec3 rd, float T) {
   vec3 acc = vec3(0.0);
   for (int i = 0; i < NE; i++) {
+    float w = emitW(i);
+    if (w <= 0.0) continue;
     vec3 oc = ro - emitPos(i);
     float b = dot(oc, rd);
     float h2 = max(dot(oc, oc) - b * b, 0.045);
     float h = sqrt(h2);
-    acc += emitCol(i) * (atan((T + b) / h) - atan(b / h)) / h;
+    acc += emitCol(i) * w * (atan((T + b) / h) - atan(b / h)) / h;
   }
-  return acc;
+  return acc * emitGain();
 }
 
-float glassShadow(vec3 p, vec3 l, float maxt) {
-  float t = 0.08, res = 1.0;
-  for (int i = 0; i < 26; i++) {
-    float d = mapGlass(p + l * t);
-    res = min(res, 11.0 * d / t);
-    t += clamp(d, 0.03, 0.45);
+float softShadow(vec3 p, vec3 l, float maxt) {
+  float t = 0.09, res = 1.0;
+  for (int i = 0; i < 24; i++) {
+    vec3 q = p + l * t;
+    float d = min(mapGlass(q), mapGeom(q));
+    res = min(res, 10.0 * d / t);
+    t += clamp(d, 0.04, 0.5);
     if (res < 0.05 || t > maxt) break;
   }
-  return clamp(res, 0.22, 1.0);
+  return clamp(res, 0.08, 1.0);
 }
 
 vec3 sky(vec3 rd) {
+  if (uScene == 3) return mix(vec3(0.10, 0.11, 0.14), vec3(0.16, 0.18, 0.24), rd.y * 0.5 + 0.5);
+  if (uScene == 4) return mix(vec3(0.018, 0.010, 0.006), vec3(0.006, 0.007, 0.014), rd.y * 0.5 + 0.5);
   return mix(vec3(0.004, 0.005, 0.011), vec3(0.008, 0.014, 0.030), rd.y * 0.5 + 0.5);
 }
 
-vec3 lambertFloor(vec3 p) {
+vec3 albedo() {
+  if (uScene == 1) return vec3(0.035, 0.038, 0.05);
+  if (uScene == 2) return vec3(0.28, 0.285, 0.32);
+  if (uScene == 3) return vec3(0.34, 0.35, 0.38);
+  if (uScene == 4) return vec3(0.035, 0.026, 0.022);
+  return vec3(0.055, 0.06, 0.08);
+}
+
+vec3 direct(vec3 p, vec3 n, bool shade) {
   vec3 col = vec3(0.0);
   for (int i = 0; i < NE; i++) {
+    float w = emitW(i);
+    if (w <= 0.0) continue;
     vec3 L = emitPos(i) - p;
     float dist = length(L);
     L /= dist;
-    col += emitCol(i) * max(L.y, 0.0) / (1.0 + dist * dist * 0.3);
+    float sh = shade ? softShadow(p, L, dist - emitR(i) - 0.06) : 1.0;
+    col += emitCol(i) * w * max(dot(n, L), 0.0) / (1.0 + dist * dist * 0.3) * sh * 3.4;
   }
   return col;
 }
 
-// One bounce only: what a refracted or reflected ray is allowed to see.
+// One bounce only: what a reflected or refracted ray is allowed to see.
 vec3 envSample(vec3 ro, vec3 rd) {
   Hit h = march(ro, rd, false, 26.0);
   vec3 col;
   if (h.mat > 0) col = emitCol(h.mat - 1) * 4.5;
-  else if (h.mat == 0) col = lambertFloor(ro + rd * h.t) * vec3(0.07, 0.075, 0.095) * 2.2;
-  else col = sky(rd);
-  return col + glowAlong(ro, rd, h.t) * GLOW;
+  else if (h.mat == 0) {
+    vec3 p = ro + rd * h.t;
+    col = direct(p, nrmSolid(p), false) * albedo();
+  } else col = sky(rd);
+  return col + glowAlong(ro, rd, h.t);
 }
 
-vec3 shadeFloor(vec3 p, vec3 rd) {
-  vec3 n = vec3(0.0, 1.0, 0.0);
-  vec3 direct = vec3(0.0);
-  for (int i = 0; i < NE; i++) {
-    vec3 L = emitPos(i) - p;
-    float dist = length(L);
-    L /= dist;
-    direct += emitCol(i) * max(dot(n, L), 0.0) / (1.0 + dist * dist * 0.3) * glassShadow(p, L, dist) * 3.4;
-  }
-  vec3 r = reflect(rd, n);
-  vec3 refl = envSample(p + n * 0.02, r);
+vec3 shadeSolid(vec3 p, vec3 n, vec3 rd) {
+  vec3 col = direct(p, n, true) * albedo();
   float fres = 0.04 + 0.72 * pow(1.0 - max(dot(n, -rd), 0.0), 4.0);
-  return direct * vec3(0.055, 0.06, 0.08) + refl * fres;
+  col += envSample(p + n * 0.02, reflect(rd, n)) * fres * (uScene == 3 ? 0.35 : 1.0);
+  return col;
 }
 
-// Each primary gets its own index of refraction and its own path through the
-// glass. The fringes are three different geometries, not a shifted image.
+// Each primary gets its own index and its own path through the glass, so the
+// fringes are three geometries disagreeing rather than one image shifted.
 vec3 shadeGlass(vec3 p, vec3 n, vec3 rd) {
   float fres = 0.035 + 0.965 * pow(1.0 - max(dot(n, -rd), 0.0), 5.0);
   vec3 refl = envSample(p + n * 0.025, reflect(rd, n));
@@ -335,8 +456,7 @@ vec3 shadeGlass(vec3 p, vec3 n, vec3 rd) {
     vec3 n2 = -nrmGlass(xp);
     vec3 rd3 = refract(rd2, n2, ior);
     if (dot(rd3, rd3) < 1e-5) rd3 = reflect(rd2, n2);
-    vec3 s = envSample(xp - n2 * 0.03, rd3);
-    tint[c] = s[c];
+    tint[c] = envSample(xp - n2 * 0.03, rd3)[c];
   }
   return mix(tint, refl, fres);
 }
@@ -344,7 +464,8 @@ vec3 shadeGlass(vec3 p, vec3 n, vec3 rd) {
 void main() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
   float az = uOrbit.x, el = uOrbit.y;
-  vec3 ro = vec3(cos(az) * cos(el), sin(el), sin(az) * cos(el)) * 6.2;
+  float dist = uScene == 1 ? 4.6 : (uScene == 2 ? 4.2 : (uScene == 4 ? 4.4 : 6.2));
+  vec3 ro = vec3(cos(az) * cos(el), sin(el), sin(az) * cos(el)) * dist;
   vec3 fw = normalize(-ro);
   vec3 rt = normalize(cross(vec3(0.0, 1.0, 0.0), fw));
   vec3 up = cross(fw, rt);
@@ -352,17 +473,11 @@ void main() {
 
   Hit h = march(ro, rd, true, 34.0);
   vec3 col;
-  if (h.mat == -2) {
-    vec3 p = ro + rd * h.t;
-    col = shadeGlass(p, nrmGlass(p), rd);
-  } else if (h.mat > 0) {
-    col = emitCol(h.mat - 1) * 4.2;
-  } else if (h.mat == 0) {
-    col = shadeFloor(ro + rd * h.t, rd);
-  } else {
-    col = sky(rd);
-  }
-  col += glowAlong(ro, rd, h.t) * GLOW;
+  if (h.mat == -2) { vec3 p = ro + rd * h.t; col = shadeGlass(p, nrmGlass(p), rd); }
+  else if (h.mat > 0) col = emitCol(h.mat - 1) * (uScene == 4 ? 5.2 : 4.2);
+  else if (h.mat == 0) { vec3 p = ro + rd * h.t; col = shadeSolid(p, nrmSolid(p), rd); }
+  else col = sky(rd);
+  col += glowAlong(ro, rd, h.t);
   outColor = vec4(col, 1.0);
 }`;
 
@@ -399,24 +514,49 @@ uniform sampler2D uBloom;
 uniform vec2 uRes;
 uniform float uAberr;
 uniform float uExposure;
+uniform vec2 uSmear;
+uniform float uGrate;
+uniform int uTaps;
 
 vec3 aces(vec3 x) {
   return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
+}
+
+// The exposure dragged along one axis: the same frame summed over a set of
+// displaced samples, each primary displaced slightly differently so a bright
+// edge leaves a coloured streak rather than a grey one.
+vec3 drag(sampler2D tex, vec2 uv, vec2 dir, float chroma) {
+  if (dot(dir, dir) < 1e-8) return texture(tex, uv).rgb;
+  vec3 acc = vec3(0.0);
+  float wsum = 0.0;
+  for (int i = 0; i < uTaps; i++) {
+    float k = float(i) / float(uTaps - 1) - 0.5;
+    float w = 1.0 - abs(k) * 1.2;
+    vec2 o = dir * k;
+    acc.r += texture(tex, uv + o * (1.0 + chroma)).r * w;
+    acc.g += texture(tex, uv + o).g * w;
+    acc.b += texture(tex, uv + o * (1.0 - chroma)).b * w;
+    wsum += w;
+  }
+  return acc / max(wsum, 1e-4);
 }
 
 void main() {
   vec2 uv = gl_FragCoord.xy / uRes;
   vec2 d = uv - 0.5;
   float k = uAberr * dot(d, d);
-  vec3 c;
-  c.r = texture(uScene, uv - d * k).r;
-  c.g = texture(uScene, uv).g;
-  c.b = texture(uScene, uv + d * k).b;
-  vec3 b;
-  b.r = texture(uBloom, uv - d * k * 1.7).r;
-  b.g = texture(uBloom, uv).g;
-  b.b = texture(uBloom, uv + d * k * 1.7).b;
+
+  vec3 c = drag(uScene, uv, uSmear, 0.10);
+  c.r = mix(c.r, texture(uScene, uv - d * k).r, 0.5);
+  c.b = mix(c.b, texture(uScene, uv + d * k).b, 0.5);
+
+  vec3 b = drag(uBloom, uv, uSmear * 1.3, 0.15);
+  b.r = mix(b.r, texture(uBloom, uv - d * k * 1.7).r, 0.5);
+  b.b = mix(b.b, texture(uBloom, uv + d * k * 1.7).b, 0.5);
+
   c = aces((c + b * 0.85) * uExposure);
+  // A fine grating: it beats against the geometry rather than sitting on top.
+  c *= 1.0 - uGrate * (0.5 + 0.5 * sin(gl_FragCoord.y * 2.1));
   c *= 1.0 - 0.42 * dot(d, d);
   float n = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
   outColor = vec4(c + (n - 0.5) / 255.0, 1.0);
@@ -426,9 +566,7 @@ void main() {
     const s = gl.createShader(type);
     gl.shaderSource(s, src);
     gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-      throw new Error(gl.getShaderInfoLog(s));
-    }
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
     return s;
   }
 
@@ -454,14 +592,13 @@ void main() {
     progBlur = program(BLUR);
     progComp = program(COMPOSITE);
   } catch (err) {
-    document.getElementById('fail').style.display = 'grid';
-    document.getElementById('fail').textContent = 'Shader compilation failed: ' + err.message;
+    failEl.style.display = 'grid';
+    failEl.textContent = 'Shader compilation failed: ' + err.message;
     return;
   }
 
   gl.bindVertexArray(gl.createVertexArray());
-
-  const type = floatOK ? gl.HALF_FLOAT : gl.UNSIGNED_BYTE;
+  const texType = floatOK ? gl.HALF_FLOAT : gl.UNSIGNED_BYTE;
   const internal = floatOK ? gl.RGBA16F : gl.RGBA8;
 
   function makeTarget() {
@@ -481,18 +618,32 @@ void main() {
     if (t.w === w && t.h === h) return;
     t.w = w; t.h = h;
     gl.bindTexture(gl.TEXTURE_2D, t.tex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, gl.RGBA, type, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, gl.RGBA, texType, null);
   }
 
   const scene = makeTarget();
   const bloomA = makeTarget();
   const bloomB = makeTarget();
 
+  const SCENES = [
+    { name: 'glasswork', note: 'A glass torus and a loose bead, five lamps in orbit. Each primary takes its own path through the interior.',
+      az: 0.9, el: 0.32, disp: 0.03, aberr: 0.10, smear: 0.0, angle: 0, grate: 0 , expo: 1.0 },
+    { name: 'colonnade', note: 'Lamps behind a row of slabs. Drag the exposure sideways and the gaps pull into ribbons, beating against a fine grating.',
+      az: 1.57, el: 0.12, disp: 0.03, aberr: 0.22, smear: 0.4, angle: 0, grate: 0.16 , expo: 1.2 },
+    { name: 'creased', note: 'A sheet folded into a triangle wave, raked by one blue lamp and one amber. The bright folds streak on the diagonal.',
+      az: 1.4, el: 0.18, disp: 0.03, aberr: 0.24, smear: 0.22, angle: -0.5, grate: 0, expo: 1.05 },
+    { name: 'veil', note: 'Everything overexposed and out of focus, with only the creases left crisp. Aberration low, drag long.',
+      az: 1.1, el: 0.24, disp: 0.02, aberr: 0.08, smear: 0.62, angle: 0.2, grate: 0 , expo: 1.05 },
+    { name: 'stack', note: 'A column of small hot blocks turning on itself, dragged vertically until each one leaves a coloured trail.',
+      az: 1.5, el: 0.06, disp: 0.03, aberr: 0.3, smear: 0.5, angle: 1.5708, grate: 0.07 , expo: 1.15 }
+  ];
+
   const state = {
+    scene: 0,
     az: 0.9, el: 0.32, tAz: 0.9, tEl: 0.32,
     dragging: false, lastX: 0, lastY: 0, idle: 0,
-    scale: 0.85, work: 12,
-    disp: 0.03, aberr: 0.1, expo: 1
+    renderScale: 0.85, work: 12, taps: 11,
+    disp: 0.03, aberr: 0.1, smear: 0, expo: 1
   };
 
   let W = 1, H = 1, DPR = 1;
@@ -504,18 +655,17 @@ void main() {
     canvas.height = H;
   }
 
-  const bind = (t, w, h) => {
-    sizeTarget(t, w, h);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, t.fb);
-    gl.viewport(0, 0, w, h);
-  };
+  const bind = (t, w, h) => { sizeTarget(t, w, h); gl.bindFramebuffer(gl.FRAMEBUFFER, t.fb); gl.viewport(0, 0, w, h); };
   const draw = () => gl.drawArrays(gl.TRIANGLES, 0, 3);
+  const fpsEl = document.getElementById('fps');
+  const blurbEl = document.getElementById('blurb');
 
   function frame(now) {
     requestAnimationFrame(frame);
     const dt = Math.min(0.05, (now - frame.last) / 1000) || 0.016;
     frame.last = now;
     const time = now / 1000;
+    const S = SCENES[state.scene];
 
     state.idle += dt;
     if (!state.dragging && state.idle > 2.5) state.tAz += dt * 0.09;
@@ -523,8 +673,8 @@ void main() {
     state.el += (state.tEl - state.el) * (1 - Math.pow(0.02, dt));
 
     const t0 = performance.now();
-    const sw = Math.max(2, Math.round(W * state.scale));
-    const sh = Math.max(2, Math.round(H * state.scale));
+    const sw = Math.max(2, Math.round(W * state.renderScale));
+    const sh = Math.max(2, Math.round(H * state.renderScale));
     const bw = Math.max(2, sw >> 2), bh = Math.max(2, sh >> 2);
 
     gl.useProgram(progScene.p);
@@ -533,6 +683,7 @@ void main() {
     gl.uniform1f(progScene.u.uTime, time);
     gl.uniform2f(progScene.u.uOrbit, state.az, state.el);
     gl.uniform1f(progScene.u.uDisp, state.disp);
+    gl.uniform1i(progScene.u.uScene, state.scene);
     draw();
 
     gl.useProgram(progPre.p);
@@ -569,21 +720,73 @@ void main() {
     gl.uniform2f(progComp.u.uRes, W, H);
     gl.uniform1f(progComp.u.uAberr, state.aberr);
     gl.uniform1f(progComp.u.uExposure, state.expo);
+    gl.uniform2f(progComp.u.uSmear, Math.cos(S.angle) * state.smear * 0.36, Math.sin(S.angle) * state.smear * 0.36);
+    gl.uniform1f(progComp.u.uGrate, S.grate);
+    gl.uniform1i(progComp.u.uTaps, state.taps);
     draw();
 
-    // Resolution follows what the machine can hold, measured, not guessed.
     gl.flush();
     state.work = state.work * 0.9 + (performance.now() - t0) * 0.1;
     frame.acc = (frame.acc || 0) + dt;
     if (frame.acc > 0.5) {
       frame.acc = 0;
-      fpsEl.textContent = Math.round(1 / dt) + ' fps · ' + Math.round(state.scale * 100) + '%';
-      if (state.work > 26 && state.scale > 0.35) state.scale = Math.max(0.35, state.scale - 0.1);
-      else if (state.work < 10 && state.scale < 1) state.scale = Math.min(1, state.scale + 0.05);
+      fpsEl.textContent = Math.round(1 / dt) + ' fps · ' + Math.round(state.renderScale * 100) + '%';
+      if (state.work > 26) {
+        if (state.taps > 5) state.taps -= 2;
+        else if (state.renderScale > 0.35) state.renderScale = Math.max(0.35, state.renderScale - 0.1);
+      } else if (state.work < 10) {
+        if (state.renderScale < 1) state.renderScale = Math.min(1, state.renderScale + 0.05);
+        else if (state.taps < 11) state.taps += 2;
+      }
     }
   }
 
-  const fpsEl = document.getElementById('fps');
+  const sliders = {};
+  function wire(id, key, digits) {
+    const el = document.getElementById(id);
+    const out = document.getElementById(id + 'Out');
+    sliders[key] = { el, out, digits };
+    const sync = () => { state[key] = parseFloat(el.value); out.textContent = state[key].toFixed(digits); };
+    el.addEventListener('input', sync);
+    sync();
+  }
+  wire('disp', 'disp', 3);
+  wire('aberr', 'aberr', 2);
+  wire('smear', 'smear', 2);
+  wire('expo', 'expo', 2);
+
+  function setSlider(key, value) {
+    const s = sliders[key];
+    s.el.value = value;
+    state[key] = value;
+    s.out.textContent = value.toFixed(s.digits);
+  }
+
+  const nav = document.getElementById('scenes');
+  SCENES.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'scene';
+    b.type = 'button';
+    b.innerHTML = '<span></span><span></span>';
+    b.children[0].textContent = String(i + 1).padStart(2, '0');
+    b.children[1].textContent = s.name;
+    b.addEventListener('click', () => select(i));
+    nav.appendChild(b);
+  });
+
+  function select(i) {
+    state.scene = i;
+    const S = SCENES[i];
+    state.tAz = S.az;
+    state.tEl = S.el;
+    state.idle = 0;
+    setSlider('disp', S.disp);
+    setSlider('aberr', S.aberr);
+    setSlider('smear', S.smear);
+    setSlider('expo', S.expo);
+    blurbEl.textContent = S.note;
+    [...nav.children].forEach((el, k) => el.setAttribute('aria-current', String(k === i)));
+  }
 
   canvas.addEventListener('pointerdown', (e) => {
     state.dragging = true;
@@ -600,26 +803,19 @@ void main() {
     state.lastY = e.clientY;
     state.idle = 0;
   });
-  for (const ev of ['pointerup', 'pointercancel']) {
-    canvas.addEventListener(ev, () => { state.dragging = false; });
-  }
+  for (const ev of ['pointerup', 'pointercancel']) canvas.addEventListener(ev, () => { state.dragging = false; });
 
-  function wire(id, key, digits) {
-    const el = document.getElementById(id);
-    const out = document.getElementById(id + 'Out');
-    const sync = () => {
-      state[key] = parseFloat(el.value);
-      out.textContent = state[key].toFixed(digits);
-    };
-    el.addEventListener('input', sync);
-    sync();
-  }
-  wire('disp', 'disp', 3);
-  wire('aberr', 'aberr', 2);
-  wire('expo', 'expo', 2);
+  window.addEventListener('keydown', (e) => {
+    if (e.key >= '1' && e.key <= String(SCENES.length)) select(Number(e.key) - 1);
+    else if (e.key === 'ArrowRight') select((state.scene + 1) % SCENES.length);
+    else if (e.key === 'ArrowLeft') select((state.scene + SCENES.length - 1) % SCENES.length);
+  });
 
   window.addEventListener('resize', resize);
   resize();
+  select(0);
+  state.az = state.tAz;
+  state.el = state.tEl;
   frame.last = performance.now();
   requestAnimationFrame(frame);
 })();
