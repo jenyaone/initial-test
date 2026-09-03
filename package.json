@@ -1,0 +1,13 @@
+{
+  "name": "sheep-herding",
+  "version": "1.0.0",
+  "description": "Endless 3D field with 53 white sheep and one black sheep herded by a shepherd or a dog cursor.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node serve.mjs"
+  },
+  "devDependencies": {
+    "three": "0.185.1"
+  }
+}
