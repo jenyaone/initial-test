@@ -28,7 +28,9 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
-          # Turn Pages on the first time this runs, so no manual setup is needed.
+          # No-op once Pages is on. Enabling it from here needs permissions the
+          # workflow token does not have, so the first time you must set
+          # Settings > Pages > Source to "GitHub Actions" by hand.
           enablement: true
       - name: Upload site
         uses: actions/upload-pages-artifact@v3

@@ -2,6 +2,7 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
+import { networkInterfaces } from 'node:os';
 
 const root = new URL('.', import.meta.url).pathname;
 const port = Number(process.env.PORT) || 8080;
@@ -28,4 +29,12 @@ createServer(async (req, res) => {
     res.writeHead(404);
     res.end('Not found');
   }
-}).listen(port, () => console.log(`Serving on http://localhost:${port}`));
+}).listen(port, () => {
+  console.log(`  local    http://localhost:${port}`);
+  // Print the LAN address too, so a phone on the same wifi can open the site.
+  for (const list of Object.values(networkInterfaces())) {
+    for (const net of list ?? []) {
+      if (net.family === 'IPv4' && !net.internal) console.log(`  network  http://${net.address}:${port}`);
+    }
+  }
+});

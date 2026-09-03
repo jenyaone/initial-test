@@ -26,14 +26,18 @@ screens so the whole flock stays in frame in portrait, and the renderer drops to
 a smaller shadow map and pixel ratio on touch devices.
 
 It cannot be opened as a local file: ES modules and import maps need a real
-server. Either use GitHub Pages (below) or run `npm start` on a computer and
-visit that machine's LAN address from the phone, for example
-`http://192.168.1.20:8080`.
+server. Either use GitHub Pages (below), or run `npm start` on a computer and
+open the `network` address it prints from a phone on the same wifi.
 
 ## Deploying
 
-Pushing to `master` publishes the site to GitHub Pages via
-`.github/workflows/pages.yml`, which turns Pages on the first time it runs.
+`.github/workflows/pages.yml` publishes the site to GitHub Pages on every push
+to `master`, and can also be run by hand from the Actions tab.
+
+Pages has to be turned on once before the first deploy succeeds: in the
+repository's **Settings > Pages**, set **Source** to **GitHub Actions**. The
+workflow token is not allowed to do this for you. Once it is on, re-run the
+workflow and the site appears at `https://<user>.github.io/<repo>/`.
 
 ## Run it
 
