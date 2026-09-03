@@ -91,8 +91,32 @@ html, body {
   transition: background 0.2s, border-color 0.2s;
 }
 .switch:hover { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.5); }
-body.dog #switch { background: rgba(255, 255, 255, 0.85); color: #0a0a0a; border-color: transparent; }
+body.dogout #switch { background: rgba(255, 255, 255, 0.85); color: #0a0a0a; border-color: transparent; }
 .ghost { border-style: dashed; color: var(--dim); }
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+}
+.overlay.show { display: flex; }
+.overlay .card {
+  pointer-events: auto;
+  background: rgba(6, 6, 7, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 16px;
+  padding: 26px 30px 24px;
+  text-align: center;
+  max-width: min(340px, 84vw);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+.overlay h2 { margin: 0 0 8px; font-size: 15px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; }
+.overlay p { margin: 0 0 18px; color: var(--dim); font-size: 13px; line-height: 1.5; }
+.overlay .switch { cursor: pointer; }
 /* live tilt readout: the dot follows the phone, and lights up once the sensor is delivering */
 .tiltpad {
   display: none;

@@ -1,5 +1,8 @@
-// A small overhead map: every sheep, the herder in the middle, and the edge
-// of the main view. Drawn on a 2D canvas so it costs nothing on the GPU.
+import { BARN } from './terrain.js';
+
+// A small overhead map: every sheep, the shepherd in the middle, the dog, the
+// barn, and the edge of the main view. Drawn on a 2D canvas so it costs
+// nothing on the GPU.
 const MIN_RANGE = 56;   // world units across the map when the flock is tight
 const MAX_RANGE = 420;  // beyond this, stragglers are pinned to the rim instead
 
@@ -20,7 +23,7 @@ export class Minimap {
     this.canvas.height = px;
   }
 
-  draw(flock, herder, viewHalfWidth, viewHalfHeight) {
+  draw(flock, herder, dog, viewHalfWidth, viewHalfHeight) {
     this.resize();
     const S = this.size;
     if (!S) return;
@@ -65,7 +68,52 @@ export class Minimap {
       }
     }
 
-    // the herder: an arrow pointing the way it faces
+    // the barn: a little house, pinned to the rim as a hollow box when far off
+    {
+      let bx = (BARN.x - herder.x) * k, by = (BARN.z - herder.z) * k;
+      const bd = Math.hypot(bx, by);
+      const out = bd > edge;
+      if (out) { bx *= edge / bd; by *= edge / bd; }
+      ctx.save();
+      ctx.translate(cx + bx, cy + by);
+      ctx.lineWidth = Math.max(1, S / 140);
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      if (out) {
+        const q = r * 2;
+        ctx.strokeRect(-q, -q, q * 2, q * 2);
+      } else {
+        const hw = Math.max(r * 2.2, (BARN.w / 2) * k), hd = Math.max(r * 1.6, (BARN.d / 2) * k);
+        ctx.fillStyle = 'rgba(255,255,255,0.14)';
+        ctx.fillRect(-hw, -hd, hw * 2, hd * 2);
+        ctx.strokeRect(-hw, -hd, hw * 2, hd * 2);
+        // the door, on the +z side
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(-hw * 0.35, hd - ctx.lineWidth, hw * 0.7, ctx.lineWidth * 2);
+      }
+      ctx.restore();
+    }
+
+    // the dog: a small dark arrow
+    if (dog) {
+      let dx = (dog.x - herder.x) * k, dy = (dog.z - herder.z) * k;
+      const dd = Math.hypot(dx, dy);
+      if (dd > edge) { dx *= edge / dd; dy *= edge / dd; }
+      const dr = r * 1.4;
+      ctx.save();
+      ctx.translate(cx + dx, cy + dy);
+      ctx.rotate(-dog.heading);
+      ctx.beginPath();
+      ctx.moveTo(0, dr * 1.3); ctx.lineTo(-dr * 0.9, -dr * 0.9); ctx.lineTo(0, -dr * 0.4); ctx.lineTo(dr * 0.9, -dr * 0.9);
+      ctx.closePath();
+      ctx.fillStyle = '#000';
+      ctx.fill();
+      ctx.strokeStyle = dog.working ? '#fff' : 'rgba(255,255,255,0.55)';
+      ctx.lineWidth = Math.max(1, S / 150);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // the shepherd: an arrow pointing the way it faces
     const hr = r * 1.9;
     ctx.save();
     ctx.translate(toX(herder.x), toY(herder.z));
@@ -76,16 +124,8 @@ export class Minimap {
     ctx.lineTo(0, -hr * 0.4);
     ctx.lineTo(hr * 0.9, -hr * 0.9);
     ctx.closePath();
-    if (herder.mode === 'dog') {
-      ctx.fillStyle = '#000';
-      ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = Math.max(1, S / 120);
-      ctx.stroke();
-    } else {
-      ctx.fillStyle = '#fff';
-      ctx.fill();
-    }
+    ctx.fillStyle = '#fff';
+    ctx.fill();
     ctx.restore();
   }
 }

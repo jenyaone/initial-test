@@ -46,7 +46,7 @@ function buildShepherd() {
   return { group: g, legs, tail: null };
 }
 
-function buildDog() {
+export function buildDog() {
   const g = new THREE.Group();
   const fur = new THREE.MeshStandardMaterial({ color: 0x232323, roughness: 0.4 });
   const white = new THREE.MeshStandardMaterial({ color: 0xf4f4f4, roughness: 0.6 });
@@ -69,37 +69,72 @@ function buildDog() {
   return { group: g, legs, tail };
 }
 
-// The cursor: a white shepherd the flock follows, or a black dog it runs from.
+// Move from (x, z) toward (nx, nz) treating rocks as solid: slide along one met
+// at an angle, sidestep one hit head-on. Returns the corrected point.
+export function slideAlongRocks(world, x, z, nx, nz, vx, vz, sp, R, dt, out) {
+  out.x = nx; out.z = nz;
+  if (!world || sp <= 0) return out;
+  world.forEachRockNear(out.x, out.z, (r) => {
+    const dx = out.x - r.x, dz = out.z - r.z;
+    const d = Math.sqrt(dx * dx + dz * dz) + 1e-6;
+    const keep = r.r + R;
+    if (d >= keep) return;
+    const ox = dx / d, oz = dz / d;
+    out.x = r.x + ox * keep; out.z = r.z + oz * keep;
+    const into = -(vx * ox + vz * oz) / (sp + 1e-6);
+    if (into > 0.85) {
+      const wx = x + vx - r.x, wz = z + vz - r.z;
+      const side = (ox * wz - oz * wx) >= 0 ? 1 : -1;
+      out.x += -oz * side * sp * dt * 0.9;
+      out.z += ox * side * sp * dt * 0.9;
+    }
+  });
+  return out;
+}
+
+// Places a root group on the terrain, leaning with the slope.
+export function standOnGround(root, x, z, heading, scale, tmp) {
+  const g = gradient(x, z, tmp.grad);
+  const y = terrainHeight(x, z);
+  tmp.normal.set(-g.x, 1, -g.z).normalize();
+  tmp.qSlope.setFromUnitVectors(tmp.up, tmp.normal);
+  tmp.q.setFromAxisAngle(tmp.up, heading).premultiply(tmp.qSlope);
+  root.position.set(x, y, z);
+  root.quaternion.copy(tmp.q);
+  root.scale.setScalar(scale);
+  return y;
+}
+export const groundTmp = () => ({
+  grad: { x: 0, z: 0 }, up: new THREE.Vector3(0, 1, 0), normal: new THREE.Vector3(0, 1, 0),
+  qSlope: new THREE.Quaternion(), q: new THREE.Quaternion(),
+});
+
+// The cursor: a white shepherd. Sheep move away from it, so you walk behind
+// the flock to push it where you want.
 export class Herder {
   constructor(scene) {
     this.root = new THREE.Group();
     scene.add(this.root);
     this.shepherd = buildShepherd();
-    this.dog = buildDog();
-    this.root.add(this.shepherd.group, this.dog.group);
-    this.dog.group.visible = false;
+    this.root.add(this.shepherd.group);
     this.shepherd.group.scale.setScalar(1.2);
-    this.dog.group.scale.setScalar(1.6);
-    this.mode = 'shepherd';
+    this.kind = 'shepherd';
+    this.active = true;
     this.x = 0; this.z = 0; this.y = 0;
-    this._grad = { x: 0, z: 0 };
-    this._up = new THREE.Vector3(0, 1, 0);
-    this._normal = new THREE.Vector3(0, 1, 0);
-    this._qSlope = new THREE.Quaternion();
-    this._qHead = new THREE.Quaternion();
+    this._tmp = groundTmp();
     this.heading = 0;
     this.phase = 0;
     this.speed = 0;
-    this.pop = 1;
     this.radius = 0.9;      // body radius for rock collisions
     this.drive = null;      // {x, z} in -1..1: a stick-style push, e.g. from phone tilt
     this._tgt = { x: 0, z: 0 };
+    this._out = { x: 0, z: 0 };
 
     this.light = new THREE.PointLight(0xfff4e0, 9, 22, 1.4);
     this.light.position.set(0, 4.5, 0);
     this.root.add(this.light);
 
-    // faint ring on the ground so the cursor reads even when the dog is in shadow
+    // faint ring on the ground so the cursor reads on the dark map
     this.ring = new THREE.Mesh(
       new THREE.RingGeometry(1.55, 1.7, 40),
       new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.28, depthWrite: false })
@@ -109,20 +144,9 @@ export class Herder {
     this.root.add(this.ring);
   }
 
-  toggle() {
-    this.setMode(this.mode === 'shepherd' ? 'dog' : 'shepherd');
-  }
+  maxSpeed() { return 6.8; }
 
-  setMode(mode) {
-    if (mode === this.mode) return;
-    this.mode = mode;
-    this.shepherd.group.visible = mode === 'shepherd';
-    this.dog.group.visible = mode === 'dog';
-    this.light.color.setHex(mode === 'dog' ? 0xd8e4ff : 0xfff4e0);
-    this.pop = 0;
-  }
-
-  maxSpeed() { return this.mode === 'dog' ? 10.5 : 6.8; }
+  placeAt(x, z) { this.x = x; this.z = z; this.speed = 0; }
 
   // Nudge a point out of any rock it sits inside, so a tap on a rock becomes
   // a walk to its edge rather than an endless shove against it.
@@ -159,30 +183,9 @@ export class Herder {
       vx = (dx / dist) * sp;
       vz = (dz / dist) * sp;
     }
-    let nx = this.x + vx * dt, nz = this.z + vz * dt;
-
-    // rocks are solid: slide along them, and sidestep when pushing head-on
-    if (world && sp > 0) {
-      const R = this.radius;
-      world.forEachRockNear(nx, nz, (r) => {
-        const dx = nx - r.x, dz = nz - r.z;
-        const d = Math.sqrt(dx * dx + dz * dz) + 1e-6;
-        const keep = r.r + R;
-        if (d >= keep) return;
-        const ox = dx / d, oz = dz / d;             // outward normal
-        nx = r.x + ox * keep; nz = r.z + oz * keep;
-        const into = -(vx * ox + vz * oz) / (sp + 1e-6); // 1 = straight at the rock
-        if (into > 0.85) {
-          // pick the side that brings us round toward where we were going
-          const wx = this.x + vx - r.x, wz = this.z + vz - r.z;
-          const side = (ox * wz - oz * wx) >= 0 ? 1 : -1;
-          nx += -oz * side * sp * dt * 0.9;
-          nz += ox * side * sp * dt * 0.9;
-        }
-      });
-    }
-    const movedX = (nx - this.x) / dt, movedZ = (nz - this.z) / dt;
-    this.x = nx; this.z = nz;
+    const o = slideAlongRocks(world, this.x, this.z, this.x + vx * dt, this.z + vz * dt, vx, vz, sp, this.radius, dt, this._out);
+    const movedX = (o.x - this.x) / dt, movedZ = (o.z - this.z) / dt;
+    this.x = o.x; this.z = o.z;
     sp = Math.min(sp, Math.hypot(movedX, movedZ));
     vx = movedX; vz = movedZ;
     this.speed += (sp - this.speed) * damp(10, dt);
@@ -190,27 +193,11 @@ export class Herder {
     this.ring.material.opacity = 0.16 + 0.16 * Math.min(1, this.speed / 4);
     this.phase += Math.min(this.speed, 14) * dt * 2.2;
 
-    this.pop = Math.min(1, this.pop + dt * 3.5);
-    const e = 1 - Math.pow(1 - this.pop, 3);
-    const scale = 0.5 + 0.5 * e;
+    this.y = standOnGround(this.root, this.x, this.z, this.heading, 1, this._tmp);
 
-    // stand on the ground, leaning with the slope like the sheep do
-    const g = gradient(this.x, this.z, this._grad);
-    this.y = terrainHeight(this.x, this.z);
-    this._normal.set(-g.x, 1, -g.z).normalize();
-    this._qSlope.setFromUnitVectors(this._up, this._normal);
-    this._qHead.setFromAxisAngle(this._up, this.heading).premultiply(this._qSlope);
-    this.root.position.set(this.x, this.y, this.z);
-    this.root.quaternion.copy(this._qHead);
-    this.root.scale.setScalar(scale);
-
-    const model = this.mode === 'dog' ? this.dog : this.shepherd;
-    const amp = Math.min(1, this.speed / 5) * (this.mode === 'dog' ? 0.8 : 0.55);
-    model.legs.forEach((leg, i) => {
-      const sign = model.legs.length === 4 ? ((i === 0 || i === 3) ? 1 : -1) : (i === 0 ? 1 : -1);
-      leg.rotation.x = Math.sin(this.phase) * amp * sign;
-    });
-    if (model.tail) model.tail.rotation.z = Math.sin(time * 9) * 0.35 * (0.3 + amp);
+    const model = this.shepherd;
+    const amp = Math.min(1, this.speed / 5) * 0.55;
+    model.legs.forEach((leg, i) => { leg.rotation.x = Math.sin(this.phase) * amp * (i === 0 ? 1 : -1); });
     model.group.position.y = Math.abs(Math.sin(this.phase)) * 0.05 * amp;
   }
 }

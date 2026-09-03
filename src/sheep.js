@@ -15,6 +15,7 @@ export class SheepRenderer {
     const legGeo = new THREE.BoxGeometry(0.2, 0.64, 0.2);
     legGeo.translate(0, -0.32, 0); // pivot at the hip
     const tailGeo = new THREE.SphereGeometry(0.17, 6, 5);
+    const eyeGeo = new THREE.SphereGeometry(0.065, 6, 5);
 
     const woolMat = new THREE.MeshStandardMaterial({ color: 0xffffff, flatShading: true, roughness: 1 });
     const darkMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 });
@@ -30,6 +31,8 @@ export class SheepRenderer {
     this.wool = make(woolGeo, woolMat, n);
     this.head = make(headGeo, darkMat, n);
     this.leg = make(legGeo, darkMat, n * 4);
+    this.eye = make(eyeGeo, darkMat, n * 2);
+    this.eye.castShadow = false;
     this.ear = lowDetail ? null : make(earGeo, darkMat, n * 2);
     this.tail = lowDetail ? null : make(tailGeo, woolMat, n);
     if (lowDetail) { earGeo.dispose(); tailGeo.dispose(); }
@@ -37,15 +40,22 @@ export class SheepRenderer {
     const c = new THREE.Color();
     for (let i = 0; i < n; i++) {
       const s = sheep[i];
+      // white sheep: pale face and black eyes; the black sheep is the reverse
       if (s.isBlack) {
         this.wool.setColorAt(i, c.setHex(0x161616));
         if (this.tail) this.tail.setColorAt(i, c);
         this.head.setColorAt(i, c.setHex(0x0e0e0e));
+        this.eye.setColorAt(i * 2, c.setHex(0xffffff));
+        this.eye.setColorAt(i * 2 + 1, c);
+        c.setHex(0x0e0e0e);
       } else {
         const g = 0.86 + s.tint * 0.14;
         this.wool.setColorAt(i, c.setRGB(g, g, g * 0.99));
         if (this.tail) this.tail.setColorAt(i, c);
-        this.head.setColorAt(i, c.setHex(0x1c1c1c));
+        this.head.setColorAt(i, c.setHex(0xd6d6d6));
+        this.eye.setColorAt(i * 2, c.setHex(0x050505));
+        this.eye.setColorAt(i * 2 + 1, c);
+        c.setHex(0x1c1c1c);
       }
       if (this.ear) {
         this.ear.setColorAt(i * 2, c);
@@ -99,6 +109,14 @@ export class SheepRenderer {
       this._headM.multiplyMatrices(root, d.matrix);
       this.head.setMatrixAt(i, this._headM);
 
+      // eyes on the front of the face
+      for (let e = 0; e < 2; e++) {
+        d.position.set(e === 0 ? -0.15 : 0.15, 0.06, 0.31);
+        d.rotation.set(0, 0, 0);
+        d.updateMatrix();
+        this.eye.setMatrixAt(i * 2 + e, m.multiplyMatrices(this._headM, d.matrix));
+      }
+
       // ears hang off the head
       if (this.ear) for (let e = 0; e < 2; e++) {
         const side = e === 0 ? -1 : 1;
@@ -131,6 +149,7 @@ export class SheepRenderer {
     this.wool.instanceMatrix.needsUpdate = true;
     this.head.instanceMatrix.needsUpdate = true;
     this.leg.instanceMatrix.needsUpdate = true;
+    this.eye.instanceMatrix.needsUpdate = true;
     if (this.ear) this.ear.instanceMatrix.needsUpdate = true;
     if (this.tail) this.tail.instanceMatrix.needsUpdate = true;
   }

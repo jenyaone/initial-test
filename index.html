@@ -16,15 +16,23 @@
   <div class="vignette"></div>
   <header class="hud">
     <h1>Fifty-three white sheep, one black</h1>
-    <p class="mode"><span id="modeName">Shepherd</span> <span class="sep">·</span> <span id="modeDesc">the flock follows</span></p>
-    <p class="hint hint-mouse">move to herd, click or space to switch</p>
-    <p class="hint hint-touch">tap the field to send them, or tilt to walk</p>
+    <p class="mode"><span id="goal">0 of 54 in the barn</span> <span class="sep">·</span> <span id="dogState">dog at heel</span></p>
+    <p class="hint hint-mouse">walk behind the flock to push it to the barn · click or space sends the dog</p>
+    <p class="hint hint-touch">tap behind the flock to push it to the barn, or tilt to walk</p>
   </header>
   <canvas id="map" class="map" aria-label="Map of the flock"></canvas>
   <div class="controls">
     <div id="tiltpad" class="tiltpad" aria-hidden="true"><i id="tiltdot"></i></div>
     <button id="tilt" class="switch ghost" type="button">Use tilt</button>
+    <button id="sound" class="switch ghost" type="button">Sound on</button>
     <button id="switch" class="switch" type="button">Send the dog</button>
+  </div>
+  <div id="overlay" class="overlay" role="dialog" aria-live="polite">
+    <div class="card">
+      <h2 id="ovTitle">Sheep lost</h2>
+      <p id="ovText"></p>
+      <button id="ovBtn" class="switch" type="button">Restart</button>
+    </div>
   </div>
   <script type="module" src="src/main.js"></script>
 </body>
