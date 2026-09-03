@@ -1,14 +1,16 @@
 # Fifty-three white sheep, one black
 
-An endless dark field seen from above, with 53 white sheep and one black sheep
-that flock together and react to your cursor.
+An endless black contour map seen from above, with 53 white sheep and one black
+sheep that flock together and react to your cursor.
 
 - **Shepherd** (white): the flock follows you and gathers around you.
 - **Dog** (black): the flock scatters and runs.
 - The camera trails the cursor with a little delay, and the map goes on forever.
 - Rocks are scattered across the fields and the sheep steer around them.
-- The ground rolls in gentle hills. Sheep lean with the slope, labour uphill and
-  pick up pace on the way down.
+- The ground rolls in gentle hills, drawn as a topographic map: pale contour
+  lines on black, a heavier index line every fifth, and stipple on the flats.
+  The lines trace the same height field the sheep walk on, so they lean with
+  the slope, labour uphill and pick up pace on the way down.
 
 ### Controls
 
@@ -70,8 +72,11 @@ Any static file server works too (`python3 -m http.server`, GitHub Pages, ...).
   a herder that attracts or repels, rock avoidance and idle wandering.
 - `src/sheep.js` draws every sheep with five instanced meshes (wool, head,
   ears, legs, tail) and animates legs, body bob and grazing heads.
-- `src/world.js` generates the fields in a shader from world coordinates and
-  places rocks deterministically per chunk, so the map is endless and stable.
+- `src/world.js` draws the contour map in a shader. Each pixel evaluates the
+  terrain height exactly and inks a line where it crosses a level, with a
+  screen-space width so lines stay hairline whether the ground is steep, flat,
+  near or far. Rocks are placed deterministically per chunk, so the map is
+  endless and stable.
 - `src/terrain.js` holds the height field as a handful of sine waves. It emits
   the matching GLSL from the same numbers the simulation uses, so the ground you
   see and the ground the sheep walk on cannot drift apart.
