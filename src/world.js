@@ -2,8 +2,7 @@ import * as THREE from 'three';
 import { hashInt, mulberry32 } from './util.js';
 
 export const CHUNK = 36;          // world units per rock chunk
-const VIEW_RADIUS = 3;            // chunks kept around the focus point (7x7)
-const MAX_PER_VARIANT = 160;
+const MAX_PER_VARIANT = 300;
 const SPAWN_SAFE_RADIUS = 14;     // no rocks where the flock starts
 
 const chunkKey = (cx, cz) => (cx + 32768) * 65536 + (cz + 32768);
@@ -90,9 +89,21 @@ export class World {
       scene.add(m);
       return m;
     });
+    this.viewRadius = 3;          // chunks kept around the focus point
     this.lastCx = null;
     this.lastCz = null;
     this._dummy = new THREE.Object3D();
+  }
+
+  // Keep rocks streaming out as far as the fog, and grow the ground disc with
+  // the camera, so a zoomed-out portrait view has no bare edge.
+  setRange(zoom, fogFar) {
+    this.ground.scale.setScalar(zoom);
+    const radius = Math.min(6, Math.max(3, Math.ceil(fogFar / CHUNK) + 1));
+    if (radius !== this.viewRadius) {
+      this.viewRadius = radius;
+      this.lastCx = null; // force a rebuild at the new radius
+    }
   }
 
   getChunk(cx, cz) {
@@ -124,7 +135,7 @@ export class World {
     for (const [key] of this.chunks) {
       const kx = Math.floor(key / 65536) - 32768;
       const kz = (key % 65536) - 32768;
-      if (Math.abs(kx - cx) > VIEW_RADIUS + 2 || Math.abs(kz - cz) > VIEW_RADIUS + 2) this.chunks.delete(key);
+      if (Math.abs(kx - cx) > this.viewRadius + 2 || Math.abs(kz - cz) > this.viewRadius + 2) this.chunks.delete(key);
     }
   }
 
@@ -150,8 +161,9 @@ export class World {
 
     const counts = [0, 0, 0];
     const d = this._dummy;
-    for (let dx = -VIEW_RADIUS; dx <= VIEW_RADIUS; dx++) {
-      for (let dz = -VIEW_RADIUS; dz <= VIEW_RADIUS; dz++) {
+    const R = this.viewRadius;
+    for (let dx = -R; dx <= R; dx++) {
+      for (let dz = -R; dz <= R; dz++) {
         const rocks = this.getChunk(cx + dx, cz + dz);
         for (const r of rocks) {
           const idx = counts[r.variant];

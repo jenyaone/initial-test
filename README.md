@@ -5,9 +5,35 @@ that flock together and react to your cursor.
 
 - **Shepherd** (white): the flock follows you and gathers around you.
 - **Dog** (black): the flock scatters and runs.
-- Click, tap the button, or press **Space** to switch between them.
 - The camera trails the cursor with a little delay, and the map goes on forever.
 - Rocks are scattered across the fields and the sheep steer around them.
+
+### Controls
+
+| | Move the herder | Switch shepherd / dog |
+| --- | --- | --- |
+| Mouse | move the cursor | click, or press `Space` |
+| Touch | tap or drag the field | the on-screen button |
+
+On a phone the herder walks to wherever you last tapped and keeps going after
+you lift your finger, so tapping never switches the mode.
+
+## On iPhone and Android
+
+It runs in mobile Safari and Chrome. iOS 16.4 or newer is required, because the
+site loads three.js through an import map. The camera pulls back on narrow
+screens so the whole flock stays in frame in portrait, and the renderer drops to
+a smaller shadow map and pixel ratio on touch devices.
+
+It cannot be opened as a local file: ES modules and import maps need a real
+server. Either use GitHub Pages (below) or run `npm start` on a computer and
+visit that machine's LAN address from the phone, for example
+`http://192.168.1.20:8080`.
+
+## Deploying
+
+Pushing to `master` publishes the site to GitHub Pages via
+`.github/workflows/pages.yml`, which turns Pages on the first time it runs.
 
 ## Run it
 

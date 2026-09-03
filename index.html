@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#060607">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Fifty-three and one</title>
   <link rel="stylesheet" href="style.css">
   <script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
@@ -13,7 +17,8 @@
   <header class="hud">
     <h1>Fifty-three white sheep, one black</h1>
     <p class="mode"><span id="modeName">Shepherd</span> <span class="sep">·</span> <span id="modeDesc">the flock follows</span></p>
-    <p class="hint">move to herd, click or space to switch</p>
+    <p class="hint hint-mouse">move to herd, click or space to switch</p>
+    <p class="hint hint-touch">tap the field to send them, button to switch</p>
   </header>
   <button id="switch" class="switch" type="button">Send the dog</button>
   <script type="module" src="src/main.js"></script>

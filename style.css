@@ -31,8 +31,9 @@ html, body {
 }
 .hud {
   position: fixed;
-  top: 24px;
-  left: 28px;
+  top: calc(24px + env(safe-area-inset-top));
+  left: calc(28px + env(safe-area-inset-left));
+  right: calc(28px + env(safe-area-inset-right));
   pointer-events: none;
   letter-spacing: 0.02em;
 }
@@ -48,11 +49,14 @@ html, body {
 .hud .mode { color: var(--fg); }
 .hud .mode .sep { color: var(--dim); margin: 0 4px; }
 .hud .hint { color: var(--dim); margin-top: 4px; font-size: 12px; }
+.hint-touch { display: none; }
 .switch {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
+  right: calc(24px + env(safe-area-inset-right));
+  bottom: calc(24px + env(safe-area-inset-bottom));
   padding: 10px 16px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.28);
   background: rgba(255, 255, 255, 0.06);
@@ -69,5 +73,23 @@ html, body {
 body.dog .switch { background: rgba(255, 255, 255, 0.85); color: #0a0a0a; border-color: transparent; }
 @media (pointer: coarse) {
   body { cursor: auto; }
-  .hud .hint { display: none; }
+  .switch { cursor: pointer; }
+  .hint-mouse { display: none; }
+  .hint-touch { display: block; }
+}
+
+/* phones: smaller type, and a switch button big enough to hit with a thumb */
+@media (max-width: 560px) {
+  .hud { top: calc(16px + env(safe-area-inset-top)); left: calc(18px + env(safe-area-inset-left)); }
+  .hud h1 { font-size: 10px; letter-spacing: 0.14em; margin-bottom: 4px; }
+  .hud p { font-size: 12px; }
+  .hud .hint { font-size: 11px; }
+  .switch {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    padding: 14px 24px;
+    font-size: 13px;
+  }
 }
