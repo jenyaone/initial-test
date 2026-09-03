@@ -3,6 +3,7 @@ import { World } from './world.js';
 import { Flock } from './flock.js';
 import { SheepRenderer } from './sheep.js';
 import { Herder } from './herder.js';
+import { Minimap } from './minimap.js';
 import { damp, clamp } from './util.js';
 import { height as terrainHeight } from './terrain.js';
 
@@ -46,6 +47,7 @@ const world = new World(scene, coarse);
 const flock = new Flock(SHEEP_COUNT, world, 0);
 const sheepRenderer = new SheepRenderer(scene, flock.sheep, coarse);
 const herder = new Herder(scene);
+const minimap = new Minimap(document.getElementById('map'));
 // handy for poking at the simulation from the console, and for tests
 window.__sim = { flock, world, herder };
 
@@ -255,6 +257,9 @@ function frame() {
   sheepRenderer.update(flock.sheep, time);
 
   renderer.render(scene, camera);
+  // the ground area the camera covers, for the view box on the map
+  const halfH = cameraOffset.length() * Math.tan((camera.fov * Math.PI) / 360);
+  minimap.draw(flock, herder, halfH * camera.aspect, halfH);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

@@ -51,6 +51,19 @@ html, body {
 .hud .mode .sep { color: var(--dim); margin: 0 4px; }
 .hud .hint { color: var(--dim); margin-top: 4px; font-size: 12px; }
 .hint-touch { display: none; }
+/* overhead map of the whole flock, top right */
+.map {
+  position: fixed;
+  top: calc(24px + env(safe-area-inset-top));
+  right: calc(24px + env(safe-area-inset-right));
+  width: 140px;
+  height: 140px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
 .controls {
   position: fixed;
   right: calc(24px + env(safe-area-inset-right));
@@ -112,7 +125,8 @@ body.tilting .tiltpad { display: block; }
 
 /* phones: smaller type, and a switch button big enough to hit with a thumb */
 @media (max-width: 560px) {
-  .hud { top: calc(16px + env(safe-area-inset-top)); left: calc(18px + env(safe-area-inset-left)); }
+  .hud { top: calc(16px + env(safe-area-inset-top)); left: calc(18px + env(safe-area-inset-left)); right: calc(134px + env(safe-area-inset-right)); }
+  .map { top: calc(16px + env(safe-area-inset-top)); right: calc(16px + env(safe-area-inset-right)); width: 104px; height: 104px; }
   .hud h1 { font-size: 10px; letter-spacing: 0.14em; margin-bottom: 4px; }
   .hud p { font-size: 12px; }
   .hud .hint { font-size: 11px; }

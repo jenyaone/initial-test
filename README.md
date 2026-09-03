@@ -19,6 +19,11 @@ sheep that flock together and react to your cursor.
 | Mouse | move the cursor | click, or press `Space` |
 | Touch | tap or drag the field | the on-screen button |
 
+A small map in the top corner shows every sheep, the black one ringed in
+white, with the shepherd or dog as an arrow at its centre and a faint box for
+what the main camera can see. Sheep beyond the map's edge are pinned to its rim
+as dimmer dots, so a scattered flock is always findable.
+
 On a phone there is also a **Use tilt** button. Once you grant it the motion
 sensor, tilting the handset walks the shepherd or dog like a thumbstick: the
 further you tilt, the faster they go, and holding the phone level stops them.
