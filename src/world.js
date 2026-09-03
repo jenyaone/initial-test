@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { hashInt, mulberry32 } from './util.js';
+import { height as terrainHeight, TERRAIN_GLSL } from './terrain.js';
 
 export const CHUNK = 36;          // world units per rock chunk
 const MAX_PER_VARIANT = 300;
@@ -26,14 +27,27 @@ function makeRockGeometry(variant) {
   return geo;
 }
 
-function makeGround() {
-  const geo = new THREE.PlaneGeometry(520, 520);
+function makeGround(segments) {
+  const geo = new THREE.PlaneGeometry(520, 520, segments, segments);
   geo.rotateX(-Math.PI / 2);
   const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, metalness: 0 });
+  // The mesh is scaled to match the camera zoom, so world-space height has to
+  // be divided by that scale before it is applied in object space.
+  const uniforms = { uInvScale: { value: 1 } };
   mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uInvScale = uniforms.uInvScale;
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+      .replace('#include <common>', `#include <common>
+varying vec3 vWPos;
+uniform float uInvScale;
+${TERRAIN_GLSL}`)
+      .replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>
+objectNormal = terrainNormal((modelMatrix * vec4(position, 1.0)).xz);`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+vec2 wxz = (modelMatrix * vec4(transformed, 1.0)).xz;
+float wh = terrainHeight(wxz);
+transformed.y += wh * uInvScale;
+vWPos = vec3(wxz.x, wh, wxz.y);`);
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
 varying vec3 vWPos;
@@ -64,19 +78,22 @@ float vnoise(vec2 p) {
   shade *= 0.75 + 0.5 * vnoise(p * 0.06);
   shade *= 0.82 + 0.36 * vnoise(p * 0.9);
   shade *= 0.9 + 0.2 * vnoise(p * 5.0);
+  // hilltops catch a little more light than the hollows
+  shade *= 1.0 + 0.3 * clamp(vWPos.y / 5.0, -1.0, 1.0);
   diffuseColor.rgb *= shade;
 }`);
   };
   const mesh = new THREE.Mesh(geo, mat);
   mesh.receiveShadow = true;
+  mesh.userData.uniforms = uniforms;
   return mesh;
 }
 
 export class World {
-  constructor(scene) {
+  constructor(scene, lowDetail = false) {
     this.scene = scene;
     this.chunks = new Map();
-    this.ground = makeGround();
+    this.ground = makeGround(lowDetail ? 144 : 192);
     scene.add(this.ground);
 
     const rockMat = new THREE.MeshStandardMaterial({ color: 0x7c7c7c, flatShading: true, roughness: 0.9 });
@@ -99,6 +116,7 @@ export class World {
   // the camera, so a zoomed-out portrait view has no bare edge.
   setRange(zoom, fogFar) {
     this.ground.scale.setScalar(zoom);
+    this.ground.userData.uniforms.uInvScale.value = 1 / zoom;
     const radius = Math.min(6, Math.max(3, Math.ceil(fogFar / CHUNK) + 1));
     if (radius !== this.viewRadius) {
       this.viewRadius = radius;
@@ -168,7 +186,7 @@ export class World {
         for (const r of rocks) {
           const idx = counts[r.variant];
           if (idx >= MAX_PER_VARIANT) continue;
-          d.position.set(r.x, -0.25 * r.s * r.sy, r.z);
+          d.position.set(r.x, terrainHeight(r.x, r.z) - 0.25 * r.s * r.sy, r.z);
           d.rotation.set(0, r.rot, 0);
           d.scale.set(r.s, r.s * r.sy, r.s);
           d.updateMatrix();

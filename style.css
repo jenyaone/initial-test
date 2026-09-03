@@ -50,10 +50,17 @@ html, body {
 .hud .mode .sep { color: var(--dim); margin: 0 4px; }
 .hud .hint { color: var(--dim); margin-top: 4px; font-size: 12px; }
 .hint-touch { display: none; }
-.switch {
+.controls {
   position: fixed;
   right: calc(24px + env(safe-area-inset-right));
   bottom: calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.switch {
+  flex: 0 0 auto;
+  white-space: nowrap;
   padding: 10px 16px;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -70,7 +77,9 @@ html, body {
   transition: background 0.2s, border-color 0.2s;
 }
 .switch:hover { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.5); }
-body.dog .switch { background: rgba(255, 255, 255, 0.85); color: #0a0a0a; border-color: transparent; }
+body.dog #switch { background: rgba(255, 255, 255, 0.85); color: #0a0a0a; border-color: transparent; }
+.ghost { border-style: dashed; color: var(--dim); }
+.ghost.active { border-style: solid; color: var(--fg); background: rgba(255, 255, 255, 0.16); }
 @media (pointer: coarse) {
   body { cursor: auto; }
   .switch { cursor: pointer; }
@@ -84,12 +93,12 @@ body.dog .switch { background: rgba(255, 255, 255, 0.85); color: #0a0a0a; border
   .hud h1 { font-size: 10px; letter-spacing: 0.14em; margin-bottom: 4px; }
   .hud p { font-size: 12px; }
   .hud .hint { font-size: 11px; }
-  .switch {
+  .controls {
     left: 50%;
     right: auto;
     transform: translateX(-50%);
     bottom: calc(20px + env(safe-area-inset-bottom));
-    padding: 14px 24px;
-    font-size: 13px;
   }
+  .controls { gap: 8px; }
+  .switch { padding: 13px 15px; font-size: 12px; letter-spacing: 0.05em; }
 }

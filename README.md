@@ -7,6 +7,8 @@ that flock together and react to your cursor.
 - **Dog** (black): the flock scatters and runs.
 - The camera trails the cursor with a little delay, and the map goes on forever.
 - Rocks are scattered across the fields and the sheep steer around them.
+- The ground rolls in gentle hills. Sheep lean with the slope, labour uphill and
+  pick up pace on the way down.
 
 ### Controls
 
@@ -15,6 +17,10 @@ that flock together and react to your cursor.
 | Mouse | move the cursor | click, or press `Space` |
 | Touch | tap or drag the field | the on-screen button |
 
+On a phone there is also a **Use tilt** button. Once you grant it the motion
+sensor, tilting the handset leans the camera around the flock. It is only a
+camera effect, so it never steers the sheep, and tapping it again turns it off.
+
 On a phone the herder walks to wherever you last tapped and keeps going after
 you lift your finger, so tapping never switches the mode.
 
@@ -22,8 +28,15 @@ you lift your finger, so tapping never switches the mode.
 
 It runs in mobile Safari and Chrome. iOS 16.4 or newer is required, because the
 site loads three.js through an import map. The camera pulls back on narrow
-screens so the whole flock stays in frame in portrait, and the renderer drops to
-a smaller shadow map and pixel ratio on touch devices.
+screens so the whole flock stays in frame in portrait, and touch devices get a
+lighter build: a smaller shadow map and pixel ratio, no antialiasing, and
+simplified sheep that drop the ears and tail and use a coarser body. That takes
+the flock from five instanced meshes to three, and from about 11,400 triangles
+down to 4,300.
+
+Tilt needs the page on **https**. iOS only offers the motion sensor in a secure
+context, so it works on GitHub Pages but not over a plain `http://` address on
+your wifi.
 
 It cannot be opened as a local file: ES modules and import maps need a real
 server. Either use GitHub Pages (below), or run `npm start` on a computer and
@@ -59,6 +72,9 @@ Any static file server works too (`python3 -m http.server`, GitHub Pages, ...).
   ears, legs, tail) and animates legs, body bob and grazing heads.
 - `src/world.js` generates the fields in a shader from world coordinates and
   places rocks deterministically per chunk, so the map is endless and stable.
+- `src/terrain.js` holds the height field as a handful of sine waves. It emits
+  the matching GLSL from the same numbers the simulation uses, so the ground you
+  see and the ground the sheep walk on cannot drift apart.
 - `src/herder.js` builds the procedural shepherd and dog that sit under the cursor.
 
 The `three` entry in `devDependencies` only pins the vendored version.

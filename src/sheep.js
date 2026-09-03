@@ -3,9 +3,13 @@ import * as THREE from 'three';
 // Renders every sheep with five instanced meshes (wool, head, ears, legs, tail)
 // so 54 animated sheep cost a handful of draw calls.
 export class SheepRenderer {
-  constructor(scene, sheep) {
+  // lowDetail drops the ears and tail and halves the wool's triangle count.
+  // From a top-down camera on a phone none of it is visible, and it takes the
+  // sheep from five instanced meshes down to three.
+  constructor(scene, sheep, lowDetail = false) {
     const n = sheep.length;
-    const woolGeo = new THREE.IcosahedronGeometry(1, 1);
+    this.lowDetail = lowDetail;
+    const woolGeo = new THREE.IcosahedronGeometry(1, lowDetail ? 0 : 1);
     const headGeo = new THREE.BoxGeometry(0.5, 0.45, 0.62);
     const earGeo = new THREE.BoxGeometry(0.3, 0.09, 0.16);
     const legGeo = new THREE.BoxGeometry(0.2, 0.64, 0.2);
@@ -25,25 +29,28 @@ export class SheepRenderer {
     };
     this.wool = make(woolGeo, woolMat, n);
     this.head = make(headGeo, darkMat, n);
-    this.ear = make(earGeo, darkMat, n * 2);
     this.leg = make(legGeo, darkMat, n * 4);
-    this.tail = make(tailGeo, woolMat, n);
+    this.ear = lowDetail ? null : make(earGeo, darkMat, n * 2);
+    this.tail = lowDetail ? null : make(tailGeo, woolMat, n);
+    if (lowDetail) { earGeo.dispose(); tailGeo.dispose(); }
 
     const c = new THREE.Color();
     for (let i = 0; i < n; i++) {
       const s = sheep[i];
       if (s.isBlack) {
         this.wool.setColorAt(i, c.setHex(0x161616));
-        this.tail.setColorAt(i, c);
+        if (this.tail) this.tail.setColorAt(i, c);
         this.head.setColorAt(i, c.setHex(0x0e0e0e));
       } else {
         const g = 0.86 + s.tint * 0.14;
         this.wool.setColorAt(i, c.setRGB(g, g, g * 0.99));
-        this.tail.setColorAt(i, c);
+        if (this.tail) this.tail.setColorAt(i, c);
         this.head.setColorAt(i, c.setHex(0x1c1c1c));
       }
-      this.ear.setColorAt(i * 2, c);
-      this.ear.setColorAt(i * 2 + 1, c);
+      if (this.ear) {
+        this.ear.setColorAt(i * 2, c);
+        this.ear.setColorAt(i * 2 + 1, c);
+      }
       for (let l = 0; l < 4; l++) this.leg.setColorAt(i * 4 + l, c);
     }
 
@@ -52,6 +59,8 @@ export class SheepRenderer {
     this._m = new THREE.Matrix4();
     this._d = new THREE.Object3D();
     this._q = new THREE.Quaternion();
+    this._qSlope = new THREE.Quaternion();
+    this._normal = new THREE.Vector3();
     this._pos = new THREE.Vector3();
     this._scl = new THREE.Vector3(1, 1, 1);
     this._up = new THREE.Vector3(0, 1, 0);
@@ -68,13 +77,16 @@ export class SheepRenderer {
       const hd = s.headDown;
       const nibble = hd > 0.8 ? Math.sin(time * 7 + i * 1.7) * 0.06 : 0;
 
-      this._q.setFromAxisAngle(this._up, s.heading);
-      this._pos.set(s.x, 0, s.z);
+      // stand on the ground and lean with the slope
+      this._normal.set(-s.gx, 1, -s.gz).normalize();
+      this._qSlope.setFromUnitVectors(this._up, this._normal);
+      this._q.setFromAxisAngle(this._up, s.heading).premultiply(this._qSlope);
+      this._pos.set(s.x, s.y, s.z);
       root.compose(this._pos, this._q, this._scl);
 
       // wool body
       d.position.set(0, 0.95 + bob, 0);
-      d.rotation.set(-speedF * 0.06, 0, Math.sin(s.phase) * 0.04 * speedF);
+      d.rotation.set(-speedF * 0.06 - s.slope * 0.5, 0, Math.sin(s.phase) * 0.04 * speedF);
       d.scale.set(0.85 * s.size, 0.72 * s.size, 1.15 * s.size);
       d.updateMatrix();
       this.wool.setMatrixAt(i, m.multiplyMatrices(root, d.matrix));
@@ -88,7 +100,7 @@ export class SheepRenderer {
       this.head.setMatrixAt(i, this._headM);
 
       // ears hang off the head
-      for (let e = 0; e < 2; e++) {
+      if (this.ear) for (let e = 0; e < 2; e++) {
         const side = e === 0 ? -1 : 1;
         d.position.set(side * 0.34, 0.14, -0.05);
         d.rotation.set(0, 0, side * -0.55);
@@ -109,15 +121,17 @@ export class SheepRenderer {
       }
 
       // tail
-      d.position.set(0, 1.08 + bob, -1.05 * s.size);
-      d.rotation.set(0, 0, 0);
-      d.updateMatrix();
-      this.tail.setMatrixAt(i, m.multiplyMatrices(root, d.matrix));
+      if (this.tail) {
+        d.position.set(0, 1.08 + bob, -1.05 * s.size);
+        d.rotation.set(0, 0, 0);
+        d.updateMatrix();
+        this.tail.setMatrixAt(i, m.multiplyMatrices(root, d.matrix));
+      }
     }
     this.wool.instanceMatrix.needsUpdate = true;
     this.head.instanceMatrix.needsUpdate = true;
-    this.ear.instanceMatrix.needsUpdate = true;
     this.leg.instanceMatrix.needsUpdate = true;
-    this.tail.instanceMatrix.needsUpdate = true;
+    if (this.ear) this.ear.instanceMatrix.needsUpdate = true;
+    if (this.tail) this.tail.instanceMatrix.needsUpdate = true;
   }
 }

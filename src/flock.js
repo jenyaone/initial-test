@@ -1,4 +1,5 @@
-import { damp, angleLerp, mulberry32 } from './util.js';
+import { damp, angleLerp, mulberry32, clamp } from './util.js';
+import { height as terrainHeight, gradient } from './terrain.js';
 
 // Boids in the XZ plane: separation, alignment, cohesion, plus a herder that
 // either attracts (shepherd) or repels (dog), rock avoidance and idle wandering.
@@ -10,6 +11,10 @@ const FOLLOW_R = 70;              // shepherd's voice carries this far
 const COMFORT = 3.2;              // sheep keep this distance from the shepherd
 const FLEE_R = 24;                // the dog scares sheep within this distance
 const ROCK_MARGIN = 3.2;
+// How hard the hills push back. A sheep heading straight up the steepest slope
+// loses about a third of its pace; the same slope downhill buys a little back.
+const SLOPE_DRAG = 3.4;
+const SLOPE_PULL = 4.5;
 
 export class Flock {
   constructor(count, world, blackIndex = 0) {
@@ -23,6 +28,7 @@ export class Flock {
         x: Math.cos(a) * r, z: Math.sin(a) * r,
         vx: 0, vz: 0, fx: 0, fz: 0,
         ax: 0, az: 0, nA: 0, cx: 0, cz: 0, nC: 0,
+        y: 0, gx: 0, gz: 0, slope: 0,
         heading: rng() * Math.PI * 2,
         phase: rng() * Math.PI * 2,
         speed: 0, fear: 0, headDown: 0, idleTime: rng() * 3,
@@ -34,6 +40,7 @@ export class Flock {
       });
     }
     this._rng = rng;
+    this._grad = { x: 0, z: 0 };
   }
 
   step(dt, herder, time) {
@@ -150,6 +157,16 @@ export class Flock {
         fz += Math.sin(s.wanderDir) * 1.6;
       }
 
+      // hills: a steady downhill pull, and a speed cap that depends on whether
+      // this sheep is climbing or descending
+      const g = gradient(s.x, s.z, this._grad);
+      s.gx = g.x; s.gz = g.z;
+      fx -= g.x * SLOPE_PULL;
+      fz -= g.z * SLOPE_PULL;
+      const sp0 = Math.sqrt(s.vx * s.vx + s.vz * s.vz);
+      const climb = sp0 > 0.05 ? (g.x * s.vx + g.z * s.vz) / sp0 : 0; // + uphill
+      s.slope += (climb - s.slope) * damp(6, dt);
+
       // integrate
       const maxAcc = 30 + s.fear * 50;
       const fm = Math.sqrt(fx * fx + fz * fz);
@@ -158,12 +175,16 @@ export class Flock {
       s.vz += fz * dt;
       const drag = 1 - Math.min(1, dt * 1.6);
       s.vx *= drag; s.vz *= drag;
-      const maxSpeed = (7.5 + s.fear * 5) * s.agility;
+      const maxSpeed = (7.5 + s.fear * 5) * s.agility * clamp(1 - s.slope * SLOPE_DRAG, 0.6, 1.35);
       let sp = Math.sqrt(s.vx * s.vx + s.vz * s.vz);
       if (sp > maxSpeed) { s.vx *= maxSpeed / sp; s.vz *= maxSpeed / sp; sp = maxSpeed; }
-      if (sp < 0.12) { s.vx = s.vz = 0; sp = 0; }
+      // Snap only true drift to a stop. A larger threshold traps a sheep that
+      // is starting from rest: its first frame of acceleration lands below the
+      // cutoff and gets zeroed again every frame, so it never sets off at all.
+      if (sp < 0.04) { s.vx = s.vz = 0; sp = 0; }
       s.x += s.vx * dt;
       s.z += s.vz * dt;
+      s.y = terrainHeight(s.x, s.z);
       s.speed = sp;
 
       // pose

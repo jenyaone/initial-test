@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { damp, angleLerp } from './util.js';
+import { height as terrainHeight, gradient } from './terrain.js';
 
 const box = (w, h, d, mat, x, y, z) => {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -80,7 +81,12 @@ export class Herder {
     this.shepherd.group.scale.setScalar(1.2);
     this.dog.group.scale.setScalar(1.6);
     this.mode = 'shepherd';
-    this.x = 0; this.z = 0;
+    this.x = 0; this.z = 0; this.y = 0;
+    this._grad = { x: 0, z: 0 };
+    this._up = new THREE.Vector3(0, 1, 0);
+    this._normal = new THREE.Vector3(0, 1, 0);
+    this._qSlope = new THREE.Quaternion();
+    this._qHead = new THREE.Quaternion();
     this.heading = 0;
     this.phase = 0;
     this.speed = 0;
@@ -130,8 +136,14 @@ export class Herder {
     const e = 1 - Math.pow(1 - this.pop, 3);
     const scale = 0.5 + 0.5 * e;
 
-    this.root.position.set(this.x, 0, this.z);
-    this.root.rotation.y = this.heading;
+    // stand on the ground, leaning with the slope like the sheep do
+    const g = gradient(this.x, this.z, this._grad);
+    this.y = terrainHeight(this.x, this.z);
+    this._normal.set(-g.x, 1, -g.z).normalize();
+    this._qSlope.setFromUnitVectors(this._up, this._normal);
+    this._qHead.setFromAxisAngle(this._up, this.heading).premultiply(this._qSlope);
+    this.root.position.set(this.x, this.y, this.z);
+    this.root.quaternion.copy(this._qHead);
     this.root.scale.setScalar(scale);
 
     const model = this.mode === 'dog' ? this.dog : this.shepherd;
