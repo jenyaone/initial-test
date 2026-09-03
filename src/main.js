@@ -87,7 +87,6 @@ const raycaster = new THREE.Raycaster();
 const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const target = new THREE.Vector3(0, 0, 0);
 const focus = new THREE.Vector3(0, 0, 0);
-const lookAt = new THREE.Vector3(0, 0, 0);
 // 'hover' re-reads the pointer every frame, so holding the mouse off-centre
 // keeps you travelling. 'fixed' is a world point a tap dropped on the ground.
 let targetMode = 'none';
@@ -140,15 +139,18 @@ function toggleMode() {
   document.body.classList.toggle('dog', dog);
 }
 
-// Phone tilt leans the camera. iOS needs an explicit permission grant from a
-// tap, and only offers the sensor at all over https.
-const TILT_DEGREES = 20;  // tilt past this and the lean is at full stretch
-const TILT_REACH = 15;    // world units the view slides at full tilt
-const tilt = { x: 0, z: 0, tx: 0, tz: 0, on: false, baseB: null, baseG: null };
+// Phone tilt walks the herder, like a thumbstick: further over is faster. iOS
+// needs an explicit permission grant from a tap, and only offers the sensor
+// at all over https.
+const TILT_DEGREES = 18;   // tilt this far past neutral for full speed
+const TILT_DEADZONE = 0.1; // fraction of that to ignore, so a still hand holds still
+const tilt = { x: 0, z: 0, tx: 0, tz: 0, on: false, baseB: null, baseG: null, reads: 0, wasDriving: false };
 const tiltBtn = document.getElementById('tilt');
+const tiltDot = document.getElementById('tiltdot');
 
 function onOrientation(e) {
   if (e.beta === null || e.gamma === null) return;
+  tilt.reads++;
   if (tilt.baseB === null) { tilt.baseB = e.beta; tilt.baseG = e.gamma; }
   const b = clamp((e.beta - tilt.baseB) / TILT_DEGREES, -1, 1);
   const g = clamp((e.gamma - tilt.baseG) / TILT_DEGREES, -1, 1);
@@ -158,16 +160,19 @@ function onOrientation(e) {
   if (angle === 90) { ax = b; az = -g; }
   else if (angle === 180) { ax = -g; az = -b; }
   else if (angle === 270 || angle === -90) { ax = -b; az = g; }
-  tilt.tx = ax * TILT_REACH;
-  tilt.tz = az * TILT_REACH;
+  tilt.tx = ax;
+  tilt.tz = az;
 }
 
 function setTilt(on) {
   tilt.on = on;
   tilt.baseB = tilt.baseG = null;
-  if (!on) { tilt.tx = tilt.tz = 0; }
+  tilt.tx = tilt.tz = 0;
+  tilt.reads = 0;
+  herder.drive = null;
   tiltBtn.textContent = on ? 'Tilt on' : 'Use tilt';
   tiltBtn.classList.toggle('active', on);
+  document.body.classList.toggle('tilting', on);
 }
 
 if (typeof DeviceOrientationEvent === 'undefined' || !coarse) {
@@ -191,6 +196,27 @@ if (typeof DeviceOrientationEvent === 'undefined' || !coarse) {
   tiltBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
 }
 
+// Turns the smoothed tilt into the herder's drive, and shows it on the pad.
+function applyTilt(dt) {
+  const k = damp(8, dt);
+  tilt.x += (tilt.tx - tilt.x) * k;
+  tilt.z += (tilt.tz - tilt.z) * k;
+  if (!tilt.on) return;
+  const mag = Math.hypot(tilt.x, tilt.z);
+  if (mag > TILT_DEADZONE) {
+    const m = (mag - TILT_DEADZONE) / (1 - TILT_DEADZONE);
+    herder.drive = { x: (tilt.x / mag) * m, z: (tilt.z / mag) * m };
+    tilt.wasDriving = true;
+  } else {
+    herder.drive = null;
+    // let go of the tilt and the herder stops where it is, rather than
+    // resuming a walk to some earlier tap
+    if (tilt.wasDriving) { target.set(herder.x, 0, herder.z); tilt.wasDriving = false; }
+  }
+  tiltDot.style.transform = `translate(${tilt.x * 14}px, ${tilt.z * 14}px)`;
+  tiltDot.classList.toggle('live', tilt.reads > 0);
+}
+
 window.addEventListener('resize', applyFraming);
 window.addEventListener('orientationchange', applyFraming);
 if (window.visualViewport) window.visualViewport.addEventListener('resize', applyFraming);
@@ -209,25 +235,16 @@ function frame() {
   time += dt;
 
   if (targetMode === 'hover') castToGround(target);
-  herder.update(dt, target, time);
+  applyTilt(dt);
+  herder.update(dt, target, time, world);
 
   // the camera trails the cursor, rising and falling with the ground
   focus.x += (herder.x - focus.x) * damp(1.8, dt);
   focus.z += (herder.z - focus.z) * damp(1.8, dt);
   focus.y += (terrainHeight(focus.x, focus.z) - focus.y) * damp(2.6, dt);
 
-  const k = damp(3, dt);
-  tilt.x += (tilt.tx - tilt.x) * k;
-  tilt.z += (tilt.tz - tilt.z) * k;
-
   camera.position.copy(focus).add(cameraOffset);
-  camera.position.x += tilt.x;
-  camera.position.z += tilt.z;
-  // the look-at point moves less than the camera, so tilting leans rather than pans
-  lookAt.copy(focus);
-  lookAt.x += tilt.x * 0.45;
-  lookAt.z += tilt.z * 0.45;
-  camera.lookAt(lookAt);
+  camera.lookAt(focus);
 
   sun.position.copy(focus).add(sunOffset);
   sun.target.position.copy(focus);

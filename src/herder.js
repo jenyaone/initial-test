@@ -91,6 +91,9 @@ export class Herder {
     this.phase = 0;
     this.speed = 0;
     this.pop = 1;
+    this.radius = 0.9;      // body radius for rock collisions
+    this.drive = null;      // {x, z} in -1..1: a stick-style push, e.g. from phone tilt
+    this._tgt = { x: 0, z: 0 };
 
     this.light = new THREE.PointLight(0xfff4e0, 9, 22, 1.4);
     this.light.position.set(0, 4.5, 0);
@@ -119,14 +122,69 @@ export class Herder {
     this.pop = 0;
   }
 
-  update(dt, target, time) {
-    // walk toward the pointer at a capped pace so the flock can keep up
-    const maxSpeed = this.mode === 'dog' ? 10.5 : 6.8;
-    const dx = target.x - this.x, dz = target.z - this.z;
-    const dist = Math.sqrt(dx * dx + dz * dz) + 1e-6;
-    const sp = Math.min(maxSpeed, dist * 8);
-    const vx = (dx / dist) * sp, vz = (dz / dist) * sp;
-    this.x += vx * dt; this.z += vz * dt;
+  maxSpeed() { return this.mode === 'dog' ? 10.5 : 6.8; }
+
+  // Nudge a point out of any rock it sits inside, so a tap on a rock becomes
+  // a walk to its edge rather than an endless shove against it.
+  clearOfRocks(pt, world) {
+    if (!world) return pt;
+    const R = this.radius + 0.2;
+    world.forEachRockNear(pt.x, pt.z, (r) => {
+      const dx = pt.x - r.x, dz = pt.z - r.z;
+      const d = Math.sqrt(dx * dx + dz * dz) + 1e-6;
+      const keep = r.r + R;
+      if (d < keep) { pt.x = r.x + (dx / d) * keep; pt.z = r.z + (dz / d) * keep; }
+    });
+    return pt;
+  }
+
+  update(dt, target, time, world) {
+    const maxSpeed = this.maxSpeed();
+    let vx, vz, sp;
+    const mag = this.drive ? Math.hypot(this.drive.x, this.drive.z) : 0;
+    if (mag > 0.001) {
+      // stick input: further over means faster, up to the walking cap
+      const m = Math.min(1, mag);
+      sp = maxSpeed * Math.pow(m, 1.4);
+      vx = (this.drive.x / mag) * sp;
+      vz = (this.drive.z / mag) * sp;
+    } else {
+      // walk toward the pointer at a capped pace so the flock can keep up
+      const t = this._tgt;
+      t.x = target.x; t.z = target.z;
+      this.clearOfRocks(t, world);
+      const dx = t.x - this.x, dz = t.z - this.z;
+      const dist = Math.sqrt(dx * dx + dz * dz) + 1e-6;
+      sp = Math.min(maxSpeed, dist * 8);
+      vx = (dx / dist) * sp;
+      vz = (dz / dist) * sp;
+    }
+    let nx = this.x + vx * dt, nz = this.z + vz * dt;
+
+    // rocks are solid: slide along them, and sidestep when pushing head-on
+    if (world && sp > 0) {
+      const R = this.radius;
+      world.forEachRockNear(nx, nz, (r) => {
+        const dx = nx - r.x, dz = nz - r.z;
+        const d = Math.sqrt(dx * dx + dz * dz) + 1e-6;
+        const keep = r.r + R;
+        if (d >= keep) return;
+        const ox = dx / d, oz = dz / d;             // outward normal
+        nx = r.x + ox * keep; nz = r.z + oz * keep;
+        const into = -(vx * ox + vz * oz) / (sp + 1e-6); // 1 = straight at the rock
+        if (into > 0.85) {
+          // pick the side that brings us round toward where we were going
+          const wx = this.x + vx - r.x, wz = this.z + vz - r.z;
+          const side = (ox * wz - oz * wx) >= 0 ? 1 : -1;
+          nx += -oz * side * sp * dt * 0.9;
+          nz += ox * side * sp * dt * 0.9;
+        }
+      });
+    }
+    const movedX = (nx - this.x) / dt, movedZ = (nz - this.z) / dt;
+    this.x = nx; this.z = nz;
+    sp = Math.min(sp, Math.hypot(movedX, movedZ));
+    vx = movedX; vz = movedZ;
     this.speed += (sp - this.speed) * damp(10, dt);
     if (sp > 0.8) this.heading = angleLerp(this.heading, Math.atan2(vx, vz), damp(12, dt));
     this.ring.material.opacity = 0.16 + 0.16 * Math.min(1, this.speed / 4);

@@ -20,8 +20,12 @@ sheep that flock together and react to your cursor.
 | Touch | tap or drag the field | the on-screen button |
 
 On a phone there is also a **Use tilt** button. Once you grant it the motion
-sensor, tilting the handset leans the camera around the flock. It is only a
-camera effect, so it never steers the sheep, and tapping it again turns it off.
+sensor, tilting the handset walks the shepherd or dog like a thumbstick: the
+further you tilt, the faster they go, and holding the phone level stops them.
+A small pad next to the button shows the live tilt, and its dot turns solid
+white once the sensor is actually delivering readings. Tap the button again to
+turn tilt off. The shepherd and dog cannot walk through rocks; they slide round
+them.
 
 On a phone the herder walks to wherever you last tapped and keeps going after
 you lift your finger, so tapping never switches the mode.

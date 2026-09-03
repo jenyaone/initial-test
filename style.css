@@ -80,6 +80,28 @@ html, body {
 .switch:hover { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.5); }
 body.dog #switch { background: rgba(255, 255, 255, 0.85); color: #0a0a0a; border-color: transparent; }
 .ghost { border-style: dashed; color: var(--dim); }
+/* live tilt readout: the dot follows the phone, and lights up once the sensor is delivering */
+.tiltpad {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  position: relative;
+  flex: 0 0 auto;
+}
+body.tilting .tiltpad { display: block; }
+.tiltpad i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+}
+.tiltpad i.live { background: #fff; }
 .ghost.active { border-style: solid; color: var(--fg); background: rgba(255, 255, 255, 0.16); }
 @media (pointer: coarse) {
   body { cursor: auto; }
